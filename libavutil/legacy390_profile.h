@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
 #ifndef LEGACY390_PROFILE_H
 #define LEGACY390_PROFILE_H
 #include <pthread.h>

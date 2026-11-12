@@ -5,11 +5,10 @@ para decodificar H.264 em uma GeForce 610M com driver NVIDIA 390.157.
 A base é o mesmo código do FFmpeg instalado no servidor Jellyfin.
 Ela não é a série upstream mais nova: atualmente existe a série 9.0.
 
-**Estado:** protótipo funcional, compilado e medido no IFRO.
-A compilação completa e a integração ao Jellyfin estão em validação.
-Os resultados abaixo são de decodificação/conversão, sem codificação H.264,
-áudio ou reprodução de uma sessão Jellyfin completa.
-A instalação Jellyfin original permanece preservada.
+**Estado:** versão completa compilada, validada e ativada no IFRO em
+12/11/2026. A instalação original foi preservada para retorno.
+Há dois conjuntos distintos de resultados abaixo: perfil do protótipo
+de decodificação e teste completo HLS com áudio. Não confundir as medições.
 
 ## O que mudou
 
@@ -113,8 +112,16 @@ pode esperar trabalho anterior da GPU.
 
 ## Compilação completa e integração
 
-[build-full.sh](tools/legacy390/build-full.sh) contém a receita em teste.
-Ela é executada em um contêiner Ubuntu compatível com a imagem Jellyfin
+[build-full.sh](tools/legacy390/build-full.sh) contém a receita validada.
+Para reproduzir a compilação completa em um host com Docker:
+```sh
+bash tools/legacy390/build-full-container.sh
+```
+O helper usa a mesma imagem do contêiner jellyfin existente. JELLYFIN_BUILD_IMAGE
+permite escolher outra imagem compatível; LEGACY390_FULL_WORKDIR escolhe
+o diretório de trabalho. O resultado fica em work-full/install/opt/ifro-ffmpeg.
+
+A receita é executada em um contêiner Ubuntu compatível com a imagem Jellyfin
 instalada, com volumes /src (este código), /headers (cabeçalhos já
 corrigidos) e /work (diretório de compilação). Produz /work/install/opt/ifro-ffmpeg.
 
@@ -125,10 +132,97 @@ CUDA-LLVM, Vulkan/libplacebo, AMF, QSV/oneVPL, SVT-AV1 e FDK-AAC não estão
 habilitados. A presença do encoder NVENC na lista não significa que a
 GeForce 610M possa usá-lo.
 
-A ativação no Jellyfin depende de validação da sessão completa, com
-codificação por CPU, áudio, legendas, busca no vídeo e retorno seguro ao
-executável original. Não usar os números do protótipo como promessa de
-velocidade da transcodificação completa.
+### Ponte de entrada para o Jellyfin
+
+O Jellyfin condiciona o NVDEC moderno à presença de um conjunto de filtros
+CUDA. A GeForce legada pode decodificar sem esses filtros. Por isso,
+[jellyfin-bridge.c](tools/legacy390/jellyfin-bridge.c) acrescenta a seleção
+de NVDEC e a transferência explícita no início do filtro de software.
+
+O launcher só intervém em HLS com libx264, arquivo local regular, H.264
+yuv420p de 8 bits, perfis Baseline/Main/High, até 1920x1088 e nível 4.1.
+Ele respeita uma seleção explícita de outro acelerador. Perfis fora desse
+conjunto, áudio e outros codecs seguem pelo caminho normal de CPU.
+Também verifica a disponibilidade do driver antes de escolher a GPU.
+
+A saída do decodificador fica em CUDA; hwdownload/format=nv12 é inserido
+antes dos filtros de software. Assim a cópia não serializa a decodificação
+dentro do decoder. O flag unsafe_output evita a cópia interna extra;
+a cópia para CPU é sincronizada antes de entregar o quadro aos filtros.
+Graphs complexos só são alterados quando a entrada de vídeo é reconhecida.
+
+O launcher usa execv para manter o PID, stdin, stdout, stderr e os sinais
+esperados pelo Jellyfin. Não monta comandos em shell. O ffprobe auxiliar
+termina junto com o launcher se o processo pai for encerrado.
+
+Configuração ativada:
+- FFMPEG_PATH=/opt/ifro-ffmpeg/bin/ffmpeg-jellyfin
+- LEGACY390_JELLYFIN_BRIDGE=1
+- LEGACY390_PINNED_DOWNLOAD=1
+- LEGACY390_PINNED_POOL=1
+- Aceleração NVIDIA selecionada; codificação de hardware desativada.
+- Decodificação habilitada para H.264; codificação por libx264 na CPU.
+- Dois threads de codificação.
+- Dispositivos e bibliotecas do driver 390 mapeados no contêiner.
+
+LEGACY390_FORCE_CPU=1 desativa a intervenção do launcher.
+O launcher não implementa uma segunda execução automática se a GPU falhar
+depois do execv. A configuração original foi preservada para retorno.
+
+### Validação completa
+
+Um Jellyfin isolado foi iniciado em 127.0.0.1:18096 com cópia consistente
+do SQLite e mídia somente para leitura. O servidor principal foi mantido
+com o original até a conclusão dos testes.
+
+Passaram:
+- H.264 pela NVIDIA, HLS 720p e AAC estéreo;
+- legenda SRT incorporada ao vídeo, com GPU;
+- busca por segmento HLS, com GPU e confirmação do -ss no comando;
+- HEVC de 10 bits decodificado pela CPU e entregue como H.264/AAC;
+- 180 quadros distintos idênticos por SHA256 entre CPU e NVDEC na versão
+  completa, incluindo unsafe_output e a transferência explícita;
+- requisição HLS no servidor principal depois da ativação, com GPU.
+
+No HLS dinâmico do Jellyfin, a busca é feita pedindo o segmento
+correspondente. StartTimeTicks não deve ser enviado ao endpoint do segmento.
+
+### Desempenho da transcodificação completa
+
+Trecho de aproximadamente 30 s em H.264 1080p com áudio E-AC3,
+convertido para HLS H.264 720p + AAC estéreo, libx264 veryfast/CRF 23.
+Mesmo comando e mesmo executável; a rodada CPU usou LEGACY390_FORCE_CPU=1.
+O contêiner de teste teve limite de dois CPUs.
+
+| Caminho | Tempo total | Tempo de CPU do FFmpeg (usuário+sistema) |
+|---|---:|---:|
+| CPU | 23,162 s | 45,972 s |
+| NVIDIA na decodificação + CPU na codificação | 18,384 s | 28,571 s |
+
+A redução foi de aproximadamente 21% no tempo total e 38% no tempo de
+CPU medido pelo FFmpeg. O tempo total inclui o launcher e seu ffprobe;
+a contagem interna de CPU do FFmpeg não inclui o ffprobe auxiliar.
+
+Evidências: [testes HLS](tools/legacy390/validation.json),
+[benchmark completo](tools/legacy390/complete-benchmark.json),
+[integridade](tools/legacy390/integrity-full.json) e
+[teste após ativação](tools/legacy390/production-smoke.json).
+
+Os testes foram de backend e decodificação dos segmentos. Não houve
+verificação visual em uma TV nesta etapa. HEVC/AV1 continuam sem aceleração
+de decodificação nesta GPU. O ganho não representa toda a biblioteca.
+
+### Operação e retorno
+
+O executável e as bibliotecas adaptadas ficam em /opt/ifro-ffmpeg, em
+volume somente para leitura. /usr/lib/jellyfin-ffmpeg não foi substituído.
+As configurações anteriores de Compose e encoding.xml foram guardadas
+no servidor, e há um script de retorno em
+/srv/ifro-nvidia-390/ffmpeg-full/rollback-production.sh.
+
+A troca foi feita sem sessões de reprodução ativas. A geração de prévias
+que estava rodando foi pausada durante a troca e retomada depois.
+O contêiner de teste ficou desligado após a validação.
 
 ## Fontes e manutenção
 

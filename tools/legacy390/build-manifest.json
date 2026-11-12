@@ -1,0 +1,11 @@
+{
+  "base": "jellyfin/jellyfin-ffmpeg v8.1.3-2",
+  "ref": "legacy390-pinned-bridge",
+  "gpu": "GeForce 610M",
+  "driver": "390.157",
+  "sha256": {
+    "bin/ffmpeg": "b74e4b66baab43f7036f18e5f6d80a53b04d5b08cb4027183a5411f785f42c05",
+    "bin/ffprobe": "c116fd9fd37e3e9274594060ddeaf11c8e801b2d3626b99677dd561c386e7fbb",
+    "bin/ffmpeg-jellyfin": "dca3ba3faebba887735b172a1e97751318b94e448b96bee26fbdd45a35482468"
+  }
+}

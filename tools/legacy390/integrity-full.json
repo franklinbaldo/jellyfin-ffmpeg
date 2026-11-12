@@ -1,0 +1,13 @@
+{
+  "cpu": {
+    "exit": 0,
+    "frames": 180,
+    "unique_frames": 180
+  },
+  "gpu": {
+    "exit": 0,
+    "frames": 180,
+    "unique_frames": 180
+  },
+  "identical": true
+}

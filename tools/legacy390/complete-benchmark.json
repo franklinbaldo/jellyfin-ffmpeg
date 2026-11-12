@@ -1,0 +1,20 @@
+{
+  "cpu": {
+    "exit": 0,
+    "wall_seconds": 23.162,
+    "gpu_used": false,
+    "cpu_user_seconds": 45.464,
+    "cpu_system_seconds": 0.508,
+    "ffmpeg_wall_seconds": 23.017,
+    "errors": []
+  },
+  "gpu": {
+    "exit": 0,
+    "wall_seconds": 18.384,
+    "gpu_used": true,
+    "cpu_user_seconds": 27.87,
+    "cpu_system_seconds": 0.701,
+    "ffmpeg_wall_seconds": 17.047,
+    "errors": []
+  }
+}

@@ -32,6 +32,7 @@ PKG_CONFIG_PATH=/work/header-prefix/lib/pkgconfig /src/configure \
  --extra-ldflags=-Wl,-rpath,/opt/ifro-ffmpeg/lib
 nice -n 10 make -j2
 make DESTDIR=/work/install install
+cc -std=gnu17 -O2 -Wall -Wextra -Werror  -o /work/install/opt/ifro-ffmpeg/bin/ffmpeg-jellyfin  /src/tools/legacy390/jellyfin-bridge.c -ldl
 du -sh /work/build /work/install
 date -Is
 echo BUILD_OK
