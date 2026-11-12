@@ -224,6 +224,14 @@ A troca foi feita sem sessões de reprodução ativas. A geração de prévias
 que estava rodando foi pausada durante a troca e retomada depois.
 O contêiner de teste ficou desligado após a validação.
 
+Para o boot, ifro-nvidia-legacy390.service executa nvidia-modprobe para
+criar os quatro dispositivos antes do Docker. O drop-in do Docker usa
+Wants/After, sem tornar os outros contêineres dependentes do sucesso da
+GPU. Modelos: [serviço](tools/legacy390/ifro-nvidia-legacy390.service) e
+[drop-in](tools/legacy390/docker-legacy390.conf).
+O serviço foi iniciado e validado no sistema ligado. Não houve reboot
+nesta etapa.
+
 ## Fontes e manutenção
 
 - [Jellyfin: aceleração de hardware](https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/)
