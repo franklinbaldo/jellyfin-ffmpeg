@@ -143,7 +143,8 @@ O launcher só intervém em HLS com libx264, arquivo local regular, H.264
 yuv420p de 8 bits, perfis Baseline/Main/High, até 1920x1088 e nível 4.1.
 Ele respeita uma seleção explícita de outro acelerador. Perfis fora desse
 conjunto, áudio e outros codecs seguem pelo caminho normal de CPU.
-Também verifica a disponibilidade do driver antes de escolher a GPU.
+Também verifica a disponibilidade do driver antes de escolher a GPU. Vídeos
+com rotação explícita seguem pela CPU para preservar a orientação.
 
 A saída do decodificador fica em CUDA; hwdownload/format=nv12 é inserido
 antes dos filtros de software. Assim a cópia não serializa a decodificação
@@ -160,6 +161,7 @@ Configuração ativada:
 - LEGACY390_JELLYFIN_BRIDGE=1
 - LEGACY390_PINNED_DOWNLOAD=1
 - LEGACY390_PINNED_POOL=1
+- LEGACY390_CUVID_RESIZE=1 para o caso seletivo descrito abaixo
 - Aceleração NVIDIA selecionada; codificação de hardware desativada.
 - Decodificação habilitada para H.264; codificação por libx264 na CPU.
 - Dois threads de codificação.
@@ -189,7 +191,7 @@ correspondente. StartTimeTicks não deve ser enviado ao endpoint do segmento.
 
 ### Desempenho da transcodificação completa
 
-Trecho de aproximadamente 30 s em H.264 1080p com áudio E-AC3,
+Trecho de aproximadamente 32 s em H.264 1080p com áudio E-AC3,
 convertido para HLS H.264 720p + AAC estéreo, libx264 veryfast/CRF 23.
 Mesmo comando e mesmo executável; a rodada CPU usou LEGACY390_FORCE_CPU=1.
 O contêiner de teste teve limite de dois CPUs.
@@ -231,6 +233,55 @@ GPU. Modelos: [serviço](tools/legacy390/ifro-nvidia-legacy390.service) e
 [drop-in](tools/legacy390/docker-legacy390.conf).
 O serviço foi iniciado e validado no sistema ligado. Não houve reboot
 nesta etapa.
+
+## Redução 1080p -> 720p na GPU
+
+Atualização de 12/11/2026: o launcher pode usar o resizer integrado ao
+h264_cuvid antes de transferir os quadros para a RAM. Isso reduz os pixels
+transferidos de 1920x1080 para 1280x720 e deixa a redução fora da CPU.
+
+A opção é seletiva e opt-in: LEGACY390_CUVID_RESIZE=1. Só entra para H.264
+progressivo 1920x1080, SAR 1:1, sem rotação, e o padrão de escala 1280x720
+validado do Jellyfin. Não antecipa a redução a recorte, deinterlace, legenda
+ou outros filtros. O restante mantém o NVDEC e o filtro de software anterior.
+Pedidos de 1080p/360p, cópia de vídeo e HEVC foram verificados separadamente.
+A incorporação de SRT e o seek também passaram com o resize ativo.
+
+| Caminho | Média de duas rodadas | CPU (usuário+sistema) |
+|---|---:|---:|
+| NVDEC + redução na CPU | 17,310 s | 28,2645 s |
+| CUVID + redução na GPU | 13,316 s | 24,137 s |
+
+Mesma amostra de cerca de 32 s, mesmos parâmetros HLS/x264/AAC e dois CPUs.
+Ganho adicional observado: ~23% no tempo total e ~14,6% no tempo de CPU.
+O teste após ativação no servidor principal confirmou o marcador de resize
+e a entrega HLS 1280x720 com AAC estéreo.
+
+A qualidade foi comparada à redução bicubic por CPU em três posições do
+vídeo: SSIM 0,99767–0,99782 e PSNR 52,07–53,76 dB. Não é uma transformação
+idêntica pixel a pixel. O critério prático adotado foi SSIM >=0,995 e PSNR
+>=40 dB nas amostras; isso não prova indistinguibilidade em todo conteúdo.
+
+Também foi ativado o modo de persistência legado da NVIDIA. Ele mantém a
+GPU inicializada entre clientes e ajuda a reduzir o custo de início. Uma
+rodada anterior sem persistência teve ~5 s para criar o decoder; os resultados
+com e sem essa condição estão separados. O serviço de boot agora aplica
+nvidia-smi -pm 1 opcionalmente, depois de criar os dispositivos.
+
+O launcher foi corrigido para funcionar também como PID 1: o ffprobe filho
+confere o PID real do pai, em vez de tratar todo pai PID 1 como órfão.
+O teste de rotação confirmou saída 404x720 para uma fonte girada 90 graus,
+pela CPU. A resolução 1080p permaneceu 1920x1080 quando solicitada.
+
+Scripts, metodologia e dados: [tools/legacy390/resize](tools/legacy390/resize/README.md).
+Para desativar só esta etapa, configure LEGACY390_CUVID_RESIZE=0 e recrie
+somente o Jellyfin; a decodificação NVDEC e o pool continuam disponíveis.
+Os snapshots anteriores de Compose e do launcher estão preservados no
+servidor em /srv/ifro-nvidia-390/resize-profile/backup.
+
+Fontes técnicas:
+- [NVIDIA: resizer integrado ao CUVID](https://docs.nvidia.com/video-technologies/video-codec-sdk/13.1/ffmpeg-with-nvidia-gpu/index.html)
+- [NVIDIA: persistência legada](https://docs.nvidia.com/deploy/driver-persistence/persistence-mode-legacy.html)
 
 ## Fontes e manutenção
 

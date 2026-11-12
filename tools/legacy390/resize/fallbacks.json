@@ -1,0 +1,24 @@
+{
+  "keep1080": {
+    "exit": 0,
+    "video": {
+      "codec_type": "video",
+      "width": 1920,
+      "height": 1080
+    },
+    "resize": false
+  },
+  "request360": {
+    "exit": 0,
+    "video": {
+      "codec_type": "video",
+      "width": 640,
+      "height": 360
+    },
+    "resize": false
+  },
+  "copy": {
+    "exit": 0,
+    "bridge": false
+  }
+}

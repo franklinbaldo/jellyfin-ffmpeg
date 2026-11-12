@@ -1,0 +1,31 @@
+{
+  "server": {
+    "version": "12.4.0"
+  },
+  "h264_gpu": {
+    "ok": true,
+    "hls": true,
+    "seconds_to_fetch": 4.861,
+    "bytes": 1245124,
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "channels": 2
+      }
+    ],
+    "subtitle_index": -1,
+    "seek_seconds": 0,
+    "gpu_used": true,
+    "gpu_resize": true,
+    "subtitle_filter": false,
+    "seek_in_command": false
+  },
+  "complete": true
+}

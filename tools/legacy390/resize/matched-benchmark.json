@@ -1,0 +1,46 @@
+{
+  "native_1": {
+    "exit": 0,
+    "seconds": 17.448,
+    "bench": [
+      27.736,
+      0.641,
+      17.136
+    ],
+    "resize": false,
+    "gpu_used": true
+  },
+  "resize_1": {
+    "exit": 0,
+    "seconds": 12.907,
+    "bench": [
+      23.589,
+      0.656,
+      12.56
+    ],
+    "resize": true,
+    "gpu_used": true
+  },
+  "resize_2": {
+    "exit": 0,
+    "seconds": 13.725,
+    "bench": [
+      23.464,
+      0.565,
+      13.439
+    ],
+    "resize": true,
+    "gpu_used": true
+  },
+  "native_2": {
+    "exit": 0,
+    "seconds": 17.172,
+    "bench": [
+      27.477,
+      0.675,
+      16.827
+    ],
+    "resize": false,
+    "gpu_used": true
+  }
+}

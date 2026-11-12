@@ -1,0 +1,22 @@
+{
+  "native": {
+    "exit": 0,
+    "wall_seconds": 21.081,
+    "bench": [
+      27.572,
+      0.761,
+      17.337
+    ],
+    "errors": []
+  },
+  "cuvid_resize": {
+    "exit": 0,
+    "wall_seconds": 16.975,
+    "bench": [
+      23.806,
+      0.698,
+      13.466
+    ],
+    "errors": []
+  }
+}

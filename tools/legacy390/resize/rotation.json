@@ -1,0 +1,17 @@
+{
+  "input": {
+    "width": 1920,
+    "height": 1080,
+    "side_data_list": [
+      {
+        "rotation": 90
+      }
+    ]
+  },
+  "output": {
+    "width": 404,
+    "height": 720
+  },
+  "bridge": false,
+  "ok": true
+}

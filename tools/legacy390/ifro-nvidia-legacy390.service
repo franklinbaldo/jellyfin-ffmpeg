@@ -10,6 +10,7 @@ RemainAfterExit=yes
 TimeoutStartSec=30
 ExecStart=/usr/bin/nvidia-modprobe -c 0
 ExecStart=/usr/bin/nvidia-modprobe -u -c 0
+ExecStart=-/usr/bin/nvidia-smi -pm 1
 ExecStart=/usr/bin/test -c /dev/nvidia0
 ExecStart=/usr/bin/test -c /dev/nvidiactl
 ExecStart=/usr/bin/test -c /dev/nvidia-uvm

@@ -1,0 +1,106 @@
+{
+  "server": {
+    "version": "12.4.0"
+  },
+  "h264_gpu": {
+    "ok": true,
+    "hls": true,
+    "seconds_to_fetch": 10.772,
+    "bytes": 2086988,
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "channels": 2
+      }
+    ],
+    "subtitle_index": -1,
+    "seek_seconds": 0,
+    "gpu_used": true,
+    "gpu_resize": true,
+    "subtitle_filter": false,
+    "seek_in_command": false
+  },
+  "h264_subtitles": {
+    "ok": true,
+    "hls": true,
+    "seconds_to_fetch": 9.783,
+    "bytes": 2156548,
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "channels": 2
+      }
+    ],
+    "subtitle_index": 2,
+    "seek_seconds": 0,
+    "gpu_used": true,
+    "gpu_resize": true,
+    "subtitle_filter": true,
+    "seek_in_command": false
+  },
+  "h264_seek": {
+    "ok": true,
+    "hls": true,
+    "seconds_to_fetch": 6.08,
+    "bytes": 1490464,
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "channels": 2
+      }
+    ],
+    "subtitle_index": -1,
+    "seek_seconds": 10,
+    "gpu_used": true,
+    "gpu_resize": true,
+    "subtitle_filter": false,
+    "seek_in_command": true
+  },
+  "hevc_cpu_fallback": {
+    "ok": true,
+    "hls": true,
+    "seconds_to_fetch": 8.418,
+    "bytes": 847692,
+    "streams": [
+      {
+        "codec_name": "h264",
+        "codec_type": "video",
+        "width": 1280,
+        "height": 640
+      },
+      {
+        "codec_name": "aac",
+        "codec_type": "audio",
+        "channels": 2
+      }
+    ],
+    "subtitle_index": -1,
+    "seek_seconds": 0,
+    "gpu_used": false,
+    "gpu_resize": false,
+    "subtitle_filter": false,
+    "seek_in_command": false
+  },
+  "complete": true
+}

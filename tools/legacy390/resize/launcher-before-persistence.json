@@ -1,0 +1,13 @@
+{
+  "native": {
+    "exit": 0,
+    "wall_seconds": 20.238,
+    "bench": [
+      27.912,
+      0.678,
+      17.039
+    ],
+    "gpu_resize": false,
+    "errors": []
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "native_cpu_scale": {
+    "exit": 0,
+    "seconds": 7.226,
+    "bench": [
+      "4.933",
+      "0.376",
+      "6.377"
+    ],
+    "errors": []
+  },
+  "cuvid_gpu_scale": {
+    "exit": 0,
+    "seconds": 5.479,
+    "bench": [
+      "1.455",
+      "0.308",
+      "4.780"
+    ],
+    "errors": []
+  }
+}
