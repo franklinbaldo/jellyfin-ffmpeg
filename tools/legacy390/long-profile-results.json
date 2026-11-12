@@ -1,0 +1,212 @@
+{
+  "cpu_300": {
+    "exit": 0,
+    "seconds": 4.153,
+    "requested_frames": 300,
+    "frames": 300,
+    "fps": 72.23,
+    "windows": [
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 4.15,
+        "fps": 72.29
+      },
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 4.15,
+        "fps": 72.29
+      }
+    ],
+    "bench": [
+      "bench: utime=7.531s stime=0.091s rtime=3.720s",
+      "bench: maxrss=64004KiB"
+    ]
+  },
+  "gpu_300": {
+    "exit": 0,
+    "seconds": 3.762,
+    "requested_frames": 300,
+    "frames": 300,
+    "fps": 79.74,
+    "windows": [
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 3.591,
+        "fps": 83.55
+      },
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 3.591,
+        "fps": 83.55
+      }
+    ],
+    "bench": [
+      "bench: utime=1.421s stime=1.181s rtime=3.126s",
+      "bench: maxrss=71500KiB"
+    ]
+  },
+  "gpu_3000": {
+    "exit": 0,
+    "seconds": 29.469,
+    "requested_frames": 3000,
+    "frames": 3000,
+    "fps": 101.8,
+    "windows": [
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 3.912,
+        "fps": 76.68
+      },
+      {
+        "from": 300,
+        "to": 1000,
+        "seconds": 6.224,
+        "fps": 112.46
+      },
+      {
+        "from": 1000,
+        "to": 3000,
+        "seconds": 19.153,
+        "fps": 104.42
+      },
+      {
+        "from": 2000,
+        "to": 3000,
+        "seconds": 9.601,
+        "fps": 104.16
+      }
+    ],
+    "bench": [
+      "bench: utime=14.200s stime=11.307s rtime=28.815s",
+      "bench: maxrss=71984KiB"
+    ]
+  },
+  "cpu_3000": {
+    "exit": 0,
+    "seconds": 36.633,
+    "requested_frames": 3000,
+    "frames": 3000,
+    "fps": 81.89,
+    "windows": [
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 3.781,
+        "fps": 79.35
+      },
+      {
+        "from": 300,
+        "to": 1000,
+        "seconds": 8.501,
+        "fps": 82.34
+      },
+      {
+        "from": 1000,
+        "to": 3000,
+        "seconds": 24.347,
+        "fps": 82.14
+      },
+      {
+        "from": 2000,
+        "to": 3000,
+        "seconds": 12.278,
+        "fps": 81.45
+      }
+    ],
+    "bench": [
+      "bench: utime=69.211s stime=0.858s rtime=36.577s",
+      "bench: maxrss=70584KiB"
+    ]
+  },
+  "cpu_9000": {
+    "exit": 0,
+    "seconds": 110.718,
+    "requested_frames": 9000,
+    "frames": 9000,
+    "fps": 81.29,
+    "windows": [
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 3.727,
+        "fps": 80.49
+      },
+      {
+        "from": 300,
+        "to": 1000,
+        "seconds": 8.288,
+        "fps": 84.46
+      },
+      {
+        "from": 1000,
+        "to": 3000,
+        "seconds": 24.43,
+        "fps": 81.87
+      },
+      {
+        "from": 3000,
+        "to": 9000,
+        "seconds": 74.268,
+        "fps": 80.79
+      },
+      {
+        "from": 8000,
+        "to": 9000,
+        "seconds": 12.422,
+        "fps": 80.5
+      }
+    ],
+    "bench": [
+      "bench: utime=214.596s stime=2.548s rtime=110.683s",
+      "bench: maxrss=71052KiB"
+    ]
+  },
+  "gpu_9000": {
+    "exit": 0,
+    "seconds": 89.025,
+    "requested_frames": 9000,
+    "frames": 9000,
+    "fps": 101.1,
+    "windows": [
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 3.681,
+        "fps": 81.49
+      },
+      {
+        "from": 300,
+        "to": 1000,
+        "seconds": 6.798,
+        "fps": 102.98
+      },
+      {
+        "from": 1000,
+        "to": 3000,
+        "seconds": 19.31,
+        "fps": 103.57
+      },
+      {
+        "from": 3000,
+        "to": 9000,
+        "seconds": 59.065,
+        "fps": 101.58
+      },
+      {
+        "from": 8000,
+        "to": 9000,
+        "seconds": 10.167,
+        "fps": 98.36
+      }
+    ],
+    "bench": [
+      "bench: utime=41.913s stime=33.362s rtime=88.358s",
+      "bench: maxrss=74884KiB"
+    ]
+  }
+}
