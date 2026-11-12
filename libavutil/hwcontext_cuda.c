@@ -33,6 +33,8 @@
 typedef struct CUDAFramesContext {
     int shift_width, shift_height;
     int tex_alignment;
+    AVBufferPool *legacy_host_pool;
+    size_t legacy_host_pool_size;
 } CUDAFramesContext;
 
 typedef struct CUDADeviceContext {
@@ -142,6 +144,45 @@ fail:
     return ret;
 }
 
+static void legacy_host_buffer_free(void *opaque, uint8_t *data)
+{
+    AVHWFramesContext *ctx = opaque;
+    AVHWDeviceContext *device_ctx = ctx->device_ctx;
+    AVCUDADeviceContext *hwctx = device_ctx->hwctx;
+    CudaFunctions *cu = hwctx->internal->cuda_dl;
+    CUcontext dummy;
+    if (CHECK_CU(cu->cuCtxPushCurrent(hwctx->cuda_ctx)) < 0)
+        return;
+    CHECK_CU(cu->cuMemFreeHost(data));
+    CHECK_CU(cu->cuCtxPopCurrent(&dummy));
+}
+
+static AVBufferRef *legacy_host_pool_alloc(void *opaque, size_t size)
+{
+    AVHWFramesContext *ctx = opaque;
+    AVHWDeviceContext *device_ctx = ctx->device_ctx;
+    AVCUDADeviceContext *hwctx = device_ctx->hwctx;
+    CudaFunctions *cu = hwctx->internal->cuda_dl;
+    AVBufferRef *buffer = NULL;
+    CUcontext dummy;
+    void *data = NULL;
+    if (CHECK_CU(cu->cuCtxPushCurrent(hwctx->cuda_ctx)) < 0)
+        return NULL;
+    if (CHECK_CU(cu->cuMemHostAlloc(&data, size, 0)) >= 0) {
+        buffer = av_buffer_create(data, size, legacy_host_buffer_free, ctx, 0);
+        if (!buffer)
+            CHECK_CU(cu->cuMemFreeHost(data));
+    }
+    CHECK_CU(cu->cuCtxPopCurrent(&dummy));
+    return buffer;
+}
+
+static void cuda_frames_uninit(AVHWFramesContext *ctx)
+{
+    CUDAFramesContext *priv = ctx->hwctx;
+    av_buffer_pool_uninit(&priv->legacy_host_pool);
+}
+
 static int cuda_frames_init(AVHWFramesContext *ctx)
 {
     AVHWDeviceContext *device_ctx = ctx->device_ctx;
@@ -184,6 +225,17 @@ static int cuda_frames_init(AVHWFramesContext *ctx)
         ffhwframesctx(ctx)->pool_internal =
             av_buffer_pool_init2(size, ctx, cuda_pool_alloc, NULL);
         if (!ffhwframesctx(ctx)->pool_internal)
+            return AVERROR(ENOMEM);
+    }
+
+    if (getenv("LEGACY390_PINNED_DOWNLOAD") && getenv("LEGACY390_PINNED_POOL")) {
+        int size = av_image_get_buffer_size(ctx->sw_format, ctx->width,
+                                           ctx->height, FFMAX(256, priv->tex_alignment));
+        if (size < 0)
+            return size;
+        priv->legacy_host_pool_size = size;
+        priv->legacy_host_pool = av_buffer_pool_init2(size, ctx, legacy_host_pool_alloc, NULL);
+        if (!priv->legacy_host_pool)
             return AVERROR(ENOMEM);
     }
 
@@ -248,6 +300,7 @@ static int cuda_transfer_data(AVHWFramesContext *ctx, AVFrame *dst,
     CUcontext dummy;
     int i, ret;
     unsigned char *legacy_host = NULL;
+    AVBufferRef *legacy_host_buffer = NULL;
     size_t legacy_offsets[AV_NUM_DATA_POINTERS] = {0};
     size_t legacy_bytes = 0;
 
@@ -267,9 +320,18 @@ static int cuda_transfer_data(AVHWFramesContext *ctx, AVFrame *dst,
             legacy_bytes += (size_t)dst->linesize[i] *
                 (src->height >> ((i == 0 || i == 3) ? 0 : priv->shift_height));
         }
-        ret = CHECK_CU(cu->cuMemHostAlloc((void **)&legacy_host, legacy_bytes, 0));
-        if (ret < 0)
-            goto exit;
+        if (priv->legacy_host_pool && legacy_bytes <= priv->legacy_host_pool_size) {
+            legacy_host_buffer = av_buffer_pool_get(priv->legacy_host_pool);
+            if (!legacy_host_buffer) {
+                ret = AVERROR(ENOMEM);
+                goto exit;
+            }
+            legacy_host = legacy_host_buffer->data;
+        } else {
+            ret = CHECK_CU(cu->cuMemHostAlloc((void **)&legacy_host, legacy_bytes, 0));
+            if (ret < 0)
+                goto exit;
+        }
     }
 
     for (i = 0; i < FF_ARRAY_ELEMS(src->data) && src->data[i]; i++) {
@@ -315,7 +377,9 @@ static int cuda_transfer_data(AVHWFramesContext *ctx, AVFrame *dst,
     }
 
 exit:
-    if (legacy_host)
+    if (legacy_host_buffer)
+        av_buffer_unref(&legacy_host_buffer);
+    else if (legacy_host)
         CHECK_CU(cu->cuMemFreeHost(legacy_host));
     CHECK_CU(cu->cuCtxPopCurrent(&dummy));
 
@@ -609,6 +673,7 @@ const HWContextType ff_hwcontext_type_cuda = {
     .device_uninit        = cuda_device_uninit,
     .frames_get_constraints = cuda_frames_get_constraints,
     .frames_init          = cuda_frames_init,
+    .frames_uninit        = cuda_frames_uninit,
     .frames_get_buffer    = cuda_get_buffer,
     .transfer_get_formats = cuda_transfer_get_formats,
     .transfer_data_to     = cuda_transfer_data,

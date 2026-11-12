@@ -34,3 +34,20 @@ GPU steady intervals approximately 98–104 fps after the initial section;
 CPU approximately 80–84 fps. Source content varies, so differences between
 early/late intervals cannot all be attributed to warm-up.
 Full long-run aggregate results in long-profile-results.json.
+
+## Reusable pinned-host buffer pool
+Set LEGACY390_PINNED_DOWNLOAD=1 and LEGACY390_PINNED_POOL=1 to enable reuse.
+AVBufferPool provides a separate leased buffer for concurrent transfers.
+The frame context owns the pool; transfers release their lease after the
+GPU synchronization and CPU copy. Pool teardown frees pinned memory while
+the CUDA device still exists. Unusually large destinations use the previous
+per-transfer allocation path instead of writing beyond a pooled buffer.
+The pool is opt-in; unset LEGACY390_PINNED_POOL restores the previous bridge.
+
+Verified CPU vs NVDEC and CUVID: 180 distinct frame hashes identical.
+9000-frame NVDEC run: 77.114 s, 116.71 fps overall, approximately
+120–130 fps after initial section. Exactly one pinned allocation (2.999 ms)
+and one free (0.580 ms); previous bridge used 9000 of each (~31.7 s).
+Decoder startup in this run took 5.015 s, plus CUDA initialization 0.394 s.
+Other stage waits overlap/change, so eliminated allocation time is not
+equal to elapsed-time speedup. Production Jellyfin remains unchanged.

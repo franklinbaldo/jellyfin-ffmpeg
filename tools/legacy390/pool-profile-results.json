@@ -1,0 +1,45 @@
+{
+  "gpu_pool_9000": {
+    "exit": 0,
+    "seconds": 77.114,
+    "requested_frames": 9000,
+    "frames": 9000,
+    "fps": 116.71,
+    "windows": [
+      {
+        "from": 0,
+        "to": 300,
+        "seconds": 8.298,
+        "fps": 36.15
+      },
+      {
+        "from": 300,
+        "to": 1000,
+        "seconds": 5.871,
+        "fps": 119.24
+      },
+      {
+        "from": 1000,
+        "to": 3000,
+        "seconds": 15.336,
+        "fps": 130.41
+      },
+      {
+        "from": 3000,
+        "to": 9000,
+        "seconds": 47.436,
+        "fps": 126.49
+      },
+      {
+        "from": 8000,
+        "to": 9000,
+        "seconds": 8.285,
+        "fps": 120.71
+      }
+    ],
+    "bench": [
+      "bench: utime=43.742s stime=9.240s rtime=76.458s",
+      "bench: maxrss=90288KiB"
+    ]
+  }
+}
