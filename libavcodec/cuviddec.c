@@ -114,7 +114,9 @@ typedef struct CuvidParsedFrame
     int is_deinterlacing;
 } CuvidParsedFrame;
 
-#define CHECK_CU(x) FF_CUDA_CHECK_DL(avctx, ctx->cudl, x)
+#define LEGACY390_UNIT "libavcodec/cuviddec.c"
+#include "libavutil/legacy390_profile.h"
+#define CHECK_CU(x) LEGACY390_MEASURE(FF_CUDA_CHECK_DL(avctx, ctx->cudl, x), #x)
 
 // NV recommends [2;4] range
 #define CUVID_MAX_DISPLAY_DELAY (4)

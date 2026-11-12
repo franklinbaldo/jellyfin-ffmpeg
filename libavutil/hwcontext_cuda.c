@@ -66,7 +66,9 @@ static const enum AVPixelFormat supported_formats[] = {
 #endif
 };
 
-#define CHECK_CU(x) FF_CUDA_CHECK_DL(device_ctx, cu, x)
+#define LEGACY390_UNIT "libavutil/hwcontext_cuda.c"
+#include "libavutil/legacy390_profile.h"
+#define CHECK_CU(x) LEGACY390_MEASURE(FF_CUDA_CHECK_DL(device_ctx, cu, x), #x)
 
 static int cuda_frames_get_constraints(AVHWDeviceContext *ctx,
                                        const void *hwconfig,
@@ -245,6 +247,9 @@ static int cuda_transfer_data(AVHWFramesContext *ctx, AVFrame *dst,
 
     CUcontext dummy;
     int i, ret;
+    unsigned char *legacy_host = NULL;
+    size_t legacy_offsets[AV_NUM_DATA_POINTERS] = {0};
+    size_t legacy_bytes = 0;
 
     if ((src->hw_frames_ctx && ((AVHWFramesContext*)src->hw_frames_ctx->data)->format != AV_PIX_FMT_CUDA) ||
         (dst->hw_frames_ctx && ((AVHWFramesContext*)dst->hw_frames_ctx->data)->format != AV_PIX_FMT_CUDA))
@@ -253,6 +258,19 @@ static int cuda_transfer_data(AVHWFramesContext *ctx, AVFrame *dst,
     ret = CHECK_CU(cu->cuCtxPushCurrent(hwctx->cuda_ctx));
     if (ret < 0)
         return ret;
+
+    /* Opt-in bridge for old CUDA drivers: DMA into pinned host memory,
+     * then copy into the caller's ordinary AVFrame buffers. */
+    if (getenv("LEGACY390_PINNED_DOWNLOAD") && src->hw_frames_ctx && !dst->hw_frames_ctx) {
+        for (i = 0; i < FF_ARRAY_ELEMS(src->data) && src->data[i]; i++) {
+            legacy_offsets[i] = legacy_bytes;
+            legacy_bytes += (size_t)dst->linesize[i] *
+                (src->height >> ((i == 0 || i == 3) ? 0 : priv->shift_height));
+        }
+        ret = CHECK_CU(cu->cuMemHostAlloc((void **)&legacy_host, legacy_bytes, 0));
+        if (ret < 0)
+            goto exit;
+    }
 
     for (i = 0; i < FF_ARRAY_ELEMS(src->data) && src->data[i]; i++) {
         CUDA_MEMCPY2D cpy = {
@@ -275,7 +293,7 @@ static int cuda_transfer_data(AVHWFramesContext *ctx, AVFrame *dst,
             cpy.dstDevice     = (CUdeviceptr)dst->data[i];
         } else {
             cpy.dstMemoryType = CU_MEMORYTYPE_HOST;
-            cpy.dstHost       = dst->data[i];
+            cpy.dstHost       = legacy_host ? legacy_host + legacy_offsets[i] : dst->data[i];
         }
 
         ret = CHECK_CU(cu->cuMemcpy2DAsync(&cpy, hwctx->stream));
@@ -289,10 +307,19 @@ static int cuda_transfer_data(AVHWFramesContext *ctx, AVFrame *dst,
             goto exit;
     }
 
+    if (legacy_host) {
+        for (i = 0; i < FF_ARRAY_ELEMS(src->data) && src->data[i]; i++)
+            memcpy(dst->data[i], legacy_host + legacy_offsets[i],
+                   (size_t)dst->linesize[i] *
+                   (src->height >> ((i == 0 || i == 3) ? 0 : priv->shift_height)));
+    }
+
 exit:
+    if (legacy_host)
+        CHECK_CU(cu->cuMemFreeHost(legacy_host));
     CHECK_CU(cu->cuCtxPopCurrent(&dummy));
 
-    return 0;
+    return ret;
 }
 
 static void cuda_device_uninit(AVHWDeviceContext *device_ctx)

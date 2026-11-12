@@ -62,7 +62,9 @@ typedef struct NVDECFramePool {
     unsigned int nb_allocated;
 } NVDECFramePool;
 
-#define CHECK_CU(x) FF_CUDA_CHECK_DL(logctx, decoder->cudl, x)
+#define LEGACY390_UNIT "libavcodec/nvdec.c"
+#include "libavutil/legacy390_profile.h"
+#define CHECK_CU(x) LEGACY390_MEASURE(FF_CUDA_CHECK_DL(logctx, decoder->cudl, x), #x)
 
 static int map_avcodec_id(enum AVCodecID id)
 {
