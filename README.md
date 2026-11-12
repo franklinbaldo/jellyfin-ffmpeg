@@ -1,3 +1,13 @@
+# IFRO: aceleração NVIDIA legada
+
+Adaptação experimental para GeForce 610M / driver 390, baseada no
+jellyfin-ffmpeg 8.1.3. Inclui ponte de memória fixada, reutilização de buffers,
+instrumentação e testes de desempenho.
+
+**[Documentação em português, compilação e resultados](README.ifro.md)**
+
+---
+
 FFmpeg README
 =============
 
